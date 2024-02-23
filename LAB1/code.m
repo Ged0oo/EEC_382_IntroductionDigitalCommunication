@@ -1,61 +1,70 @@
 clc; clear;
 
-% Simulation parameters
-num_bits = 1e3; % Number of bits
-SNR_range = -20:2:20; % SNR range in dB
-num_iterations = 100; % Number of iterations for averaging BER
+% Number of bits
+N=1e6;
 
-% Initialize BER vector
-BER = zeros(size(SNR_range));
+% Generate random binary data vector (sent signal)
+data = randi([0,1],1,N);
 
-for snr_index = 1:length(SNR_range)
-    SNR = 10^(SNR_range(snr_index)/10); % Convert SNR from dB to linear scale
-    noise_var = 1/SNR; % Noise variance
-    
-    num_errors = 0; % Initialize error count
-    
-    for iter = 1:num_iterations
-        % Generate random binary data vector
-        bits = randi([0,1], 1, num_bits);
-        
-        % Calculate transmitted signal power
-        signal_power = sum(bits.^2)/num_bits;
-        
-        % Generate noise
-        noise = sqrt(noise_var)*randn(1, num_bits);
-        
-        % Received sequence
-        Rx_sequence = bits + noise;
-        
-        % Decision: simple thresholding
-        detected_bits = Rx_sequence > 0.5;
-        
-        % Count number of errors
-        num_errors = num_errors + sum(detected_bits ~= bits);
-    end
-    
-    % Calculate Bit Error Rate (BER)
-    BER(snr_index) = num_errors / (num_bits * num_iterations);
+% Calculate transmitted signal power =E(x^2)
+sigPower = mean(data.^2);
+
+% SNR range in dB
+SNRdB_range = -20:2:20; 
+
+% Convert SNR to linear scale              
+SNR=db2pow(SNRdB_range);
+
+% Initialize error count
+errorNUM=0;
+
+RecievedSequence = zeros(size(data));
+RecievedBits = zeros(size(data));
+BER = zeros(size(SNRdB_range));
+
+for k=1:length(SNRdB_range)
+	% Add noise based on SNR
+	% Dividing by the sqrt power since its not normalized
+	noise=((1/sqrt(SNR(k)))*randn(1,N)*sqrt(sigPower));
+
+	% Received signal with noise
+	RecievedSequence = data+noise;
+
+	for i=1:N
+		%define the threeshold value
+		if RecievedSequence(i)<0                                 
+			RecievedBits(i) = 0;
+		else 
+			RecievedBits(i) = 1;
+		end
+	end
+
+	%comapre original bit with the recived one	
+	Rx=xor(data,RecievedBits);                                   
+
+	% Count Number of Errored bits
+	for j=1:N  
+		if(Rx(j)==1)
+			errorNUM = errorNUM+1;
+		end
+	end
+
+	BER(k) = errorNUM ./ N;
+	errorNUM=0;
 end
 
 % Plot BER curve
 figure;
-plot(SNR_range, BER, 'x-k', 'Color', 'b', 'LineWidth', 1); % Set curve color to green
-xlabel('SNR (dB)');
-ylabel('Bit Error Rate (BER)');
-title('Bit Error Rate vs. SNR');
-grid on; % Add grid for better visualization
-
-% Specify y-axis ticks with smaller steps
-yticks(0:0.05:1); % Adjust as needed
+semilogy(SNRdB_range, BER, 'x-k', 'Color', 'b', 'LineWidth', 1); 
+xlabel('SNR (dB)'); ylabel('Bit Error Rate (BER)');
+title('Bit Error Rate vs. SNR'); grid on;
+yticks(0:0.05:1);
 
 % Calculation of transmitted signal power
-disp(['Transmitted Signal Power: ' num2str(signal_power)]);
-
-% Comment on equation (1)
-disp('Comment on Equation (1): Dividing by the square root of SNR is done to normalize the noise variance.');
+disp(['Transmitted Signal Power: ' num2str(sigPower)]);
 
 % Find SNR where the system is nearly without error
 [min_BER, min_BER_index] = min(BER);
-SNR_nearly_without_error = SNR_range(min_BER_index);
+SNR_nearly_without_error = SNRdB_range(min_BER_index);
 disp(['SNR where the system is nearly without error: ' num2str(SNR_nearly_without_error) ' dB']);
+
