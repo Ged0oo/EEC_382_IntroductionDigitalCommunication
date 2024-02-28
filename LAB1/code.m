@@ -21,6 +21,7 @@ errorNUM=0;
 RecievedSequence = zeros(size(data));
 RecievedBits = zeros(size(data));
 BER = zeros(size(SNRdB_range));
+thresholdVal = 0.5;
 
 for k=1:length(SNRdB_range)
 	% Add noise based on SNR
@@ -32,7 +33,7 @@ for k=1:length(SNRdB_range)
 
 	for i=1:N
 		%define the threeshold value
-		if RecievedSequence(i)<0                                 
+		if RecievedSequence(i)<thresholdVal                                 
 			RecievedBits(i) = 0;
 		else 
 			RecievedBits(i) = 1;
@@ -57,8 +58,7 @@ end
 figure;
 semilogy(SNRdB_range, BER, 'x-k', 'Color', 'b', 'LineWidth', 1); 
 xlabel('SNR (dB)'); ylabel('Bit Error Rate (BER)');
-title('Bit Error Rate vs. SNR'); grid on;
-yticks(0:0.05:1);
+title('Bit Error Rate vs. SNR');
 
 % Calculation of transmitted signal power
 disp(['Transmitted Signal Power: ' num2str(sigPower)]);
