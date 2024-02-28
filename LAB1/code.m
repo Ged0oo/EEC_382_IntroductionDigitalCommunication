@@ -6,7 +6,7 @@ N=1e6;
 % Generate random binary data vector (sent signal)
 data = randi([0,1],1,N);
 
-% Calculate transmitted signal power =E(x^2)
+% Calculate transmitted signal power = E(x^2)
 sigPower = mean(data.^2);
 
 % SNR range in dB
@@ -25,7 +25,7 @@ thresholdVal = 0.5;
 
 for k=1:length(SNRdB_range)
 	% Add noise based on SNR
-	% Dividing by the sqrt power since its not normalized
+	% Dividing by the sqrt of power since its normalized power
 	noise=((1/sqrt(SNR(k)))*randn(1,N)*sqrt(sigPower));
 
 	% Received signal with noise
